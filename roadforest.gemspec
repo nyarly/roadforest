@@ -23,6 +23,18 @@ Gem::Specification.new do |spec|
   # Do this: y$jj@"
   # !!find lib bin doc spec spec_help -not -regex '.*\.sw.' -type f 2>/dev/null
   spec.files    = %w[
+    lib/roadforest/authorization/auth-entity.rb
+    lib/roadforest/authorization/authentication-chain.rb
+    lib/roadforest/authorization/default-authentication-store.rb
+    lib/roadforest/authorization/grant-builder.rb
+    lib/roadforest/authorization/grants-holder.rb
+    lib/roadforest/authorization/manager.rb
+    lib/roadforest/authorization/policy.rb
+    lib/roadforest/graph/nav-affordance-builder.rb
+    lib/roadforest/interface/utility.rb
+    lib/roadforest/interface/utility/backfill.rb
+    lib/roadforest/interface/utility/grant-list.rb
+    lib/roadforest/interface/utility/grant.rb
     lib/roadforest-client.rb
     lib/roadforest/http/message.rb
     lib/roadforest/http/graph-response.rb
