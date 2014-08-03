@@ -1,61 +1,61 @@
-@base <http://judsonlester.info/rdf-vocab/affordance> .
+@prefix af:   <http://judsonlester.info/rdf-vocab/affordance#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix path: <http://judsonlester.info/rdf-vocab/path> .
 
-<#Affordance> a rdfs:Class ;
+<af:Affordance> a rdfs:Class ;
   rdfs:comment "Base class for all affordances" .
 
-<#Null> a rdfs:Class ;
+<af:Null> a rdfs:Class ;
   rdfs:subClassOf <#Affordance> ;
   rdfs:comment "The provided affordance is null. i.e. not dereferenceable, no actions provided".
 
-<#Safe> a rdfs:Class ;
+<af:Safe> a rdfs:Class ;
   rdfs:subClassOf <#Affordance> ;
   rdfs:comment "A safe affordance - it is asserted that no change will be triggered by activating the affordance" .
 
-<#Metadata> a rdfs:Class ;
+<af:Metadata> a rdfs:Class ;
   rdfs:subClassOf <#Safe> ;
   rdfs:comment "There is extra metadata available about this resource" .
 
-<#Idempotent> a rdfs:Class ;
+<af:Idempotent> a rdfs:Class ;
   rdfs:subClassOf <#Affordance> ;
   rdfs:comment "An affordance that will cause a change, but that can be repeated without further hazard" .
 
-<#Unsafe> a rdfs:Class ;
+<af:Unsafe> a rdfs:Class ;
   rdfs:subClassOf <#Affordance> ;
   rdfs:comment "Affordances whose effects cannot be simply modeled and should be triggered with care" .
 
-<#Navigate> a rdfs:Class ;
+<af:Navigate> a rdfs:Class ;
   rdfs:subClassOf <#Safe> ;
   rdfs:comment "A link to another resource. The assumption is that otherwise undescribed URLs have a navigation affordance" .
 
-<#Embed> a rdfs:Class ;
+<af:Embed> a rdfs:Class ;
   rdfs:subClassOf <#Safe> ;
   rdfs:comment "A resource that should be properly displayed in-line rather than provided as a hyperlink" .
 
-<#Update> a rdfs:Class ;
+<af:Update> a rdfs:Class ;
   rdfs:subClassOf <#Idempotent> ;
   rdfs:comment "Acting on this affordance will update the targeted resource. Repeated updates will have not further effect" .
 
-<#Remove> a rdfs:Class ;
+<af:Remove> a rdfs:Class ;
   rdfs:subClassOf <#Idempotent> ;
   rdfs:comment "Triggering this affordance is a request to delete the resource" .
 
-<#Create> a rdfs:Class ;
+<af:Create> a rdfs:Class ;
   rdfs:subClassOf <#Unsafe> ;
   rdfs:comment """Triggering this affordance implies a request to create a new
   resource""" .
 
-<#Mutate> a rdfs:Class ;
+<af:Mutate> a rdfs:Class ;
   rdfs:subClassOf <#Unsafe> ;
   rdfs:comment """Triggering this affordance expresses a desire to make changes
   to a resource""" .
 
-<#Permission> a rdfs:Class ;
+<af:Permission> a rdfs:Class ;
   rdfs:comment """URL for a permission that grants access to an affordance""" .
 
-<#PermissionList> a rdfs:Class ;
+<af:PermissionList> a rdfs:Class ;
   rdfs:comment """A collection of Permissions""" .
 
 #Consider: <#Append> - distinct from <#Create> in that the implication is
@@ -64,25 +64,25 @@
 
 # Controls
 
-<#controlledBy> a rdf:Property ;
+<af:controlledBy> a rdf:Property ;
   rdfs:domain <#Affordance> ;
   rdfs:range <#Control> .
 
-<#Control> a rdfs:Class .
+<af:Control> a rdfs:Class .
 
-<#controlName> a rdf:Property ;
+<af:controlName> a rdf:Property ;
   rdfs:domain <#Control> ;
   rdfs:range rdfs:Literal ;
   rdfs:comment """Valid values are limited per application. Examples include
                   'Media-Type', 'Encoding' or 'EntityTag'""" .
 
-<#controlValue> a rdf:Property ;
+<af:controlValue> a rdf:Property ;
   rdfs:domain <#Control> ;
   rdfs:range rdfs:Literal .
 
 # Authorization
 
-<#authorizedBy> a rdf:Property ;
+<af:authorizedBy> a rdf:Property ;
   rdfs:domain <#Affordance> ;
   rdfs:range <#Permission> ;
   rdfs:comment """Opaque descriptors of authorization tokens - resource can be
@@ -90,23 +90,23 @@
   defreferenceable, and that they be accessible iff the user is authorized to
   activate the affordance in question.""" .
 
-<#grants> a rdf:Property ;
+<af:grants> a rdf:Property ;
   rdfs:domain <#PermissionList> ;
   rdfs:range <#Permission> ;
   rdfs:comment """Used to include a Permission in a grant list""" .
 
 # Target
 
-<#target> a rdf:Property ;
+<af:target> a rdf:Property ;
   rdfs:domain <#Affordance> ;
   rdfs:range rdfs:Resource , <#ResourceTemplate> ;
   rdfs:comment """The URL to which data is to be transmitted by this affordance."""
 
 # Payload
 
-<#ResourceTemplate> a rdfs:Class .
+<af:ResourceTemplate> a rdfs:Class .
 
-<#pattern> a rdf:Property ;
+<af:pattern> a rdf:Property ;
   rdfs:domain <#ResourceTemplate> ;
   rdfs:range rdfs:Literal ;
   rdfs:comment """An IRITemplate (RFC 5xxx) that defines how the template is
@@ -114,13 +114,13 @@
     key, value set called param_list, so something like (?param_list*) should
     work like an HTML action=GET form""" .
 
-<#var> a rdf:Property ;
+<af:var> a rdf:Property ;
   rdfs:domain <#ResourceTemplate> ;
   rdfs:range path:Literal , rdf:List , path:Target ;
   rdfs:comment """When the object is list, the members of the list should be
     path:Literal , and the the list order implies the order in which the parameters
     should be used""" .
 
-<#payload> a rdf:Property ;
+<af:payload> a rdf:Property ;
   rdfs:domain <#Affordance> ;
   rdfs:range path:Root .

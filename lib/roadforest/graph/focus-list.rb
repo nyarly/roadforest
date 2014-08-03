@@ -44,6 +44,10 @@ module RoadForest::Graph
     alias << append
 
     def append_node(subject=nil)
+      if empty? and self.subject == RDF.nil
+        raise "Attempted to append #{subject} to an empty list (remove the list and replace it)"
+      end
+
       base_node.create_node(subject) do |node|
         append(node.subject)
         yield node if block_given?

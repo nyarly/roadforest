@@ -12,6 +12,8 @@ describe RoadForest::RemoteHost do
 
   let :services do
     require 'logger'
+    require 'roadforest/type-handlers/jsonld'
+    require 'roadforest/type-handlers/rdfa'
     FileManagementExample::ServicesHost.new.tap do |host|
       host.root_url = "http://localhost:8778/" # +/- a '/' at the end is finicky.
       host.file_records = [
@@ -19,15 +21,30 @@ describe RoadForest::RemoteHost do
         FileManagementExample::FileRecord.new("two", false),
         FileManagementExample::FileRecord.new("three", false)
       ]
+
+      rdfa = RoadForest::TypeHandlers::RDFa.new
+      rdfa.haml_options = {:ugly => false}
+      jsonld = RoadForest::TypeHandlers::JSONLD.new
+
+      host.default_content_engine = RoadForest::ContentHandling::Engine.new.tap do |engine|
+        engine.add rdfa, "text/html;q=1;rdfa=1"
+        engine.add rdfa, "application/xhtml+xml;q=1;rdfa=1"
+        engine.add jsonld, "application/ld+json"
+        engine.add rdfa, "text/html;q=0.5"
+        engine.add rdfa, "application/xhtml+xml;q=0.5"
+      end
+
       host.destination_dir = destination_dir
       host.authz.authenticator.add_account("user", "secret", "token")
+      host.authz.cleartext_grants!
     end
   end
 
   let :base_server do
     RoadForest::TestSupport::RemoteHost.new(services).tap do |server|
       server.add_credentials("user", "secret")
-      #server.trace = true
+      #server.http_trace = true
+      #server.graph_trace = true
     end
   end
 

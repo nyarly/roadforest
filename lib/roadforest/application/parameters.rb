@@ -19,7 +19,13 @@ module RoadForest
 
       def fetch(field_name)
         return path_tokens if field_name == '*'
-        @path_info.fetch(field_name){ @query_params.fetch(field_name) }
+        @path_info.fetch(field_name) do
+          if @query_params.respond_to?(:fetch)
+            @query_params.fetch(field_name)
+          else
+            raise KeyError, "No parameter: #{field_name}"
+          end
+        end
       end
 
       def slice(*fields)

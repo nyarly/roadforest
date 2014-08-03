@@ -5,9 +5,10 @@ module RoadForest
   module HTTP
     class GraphTransfer
       attr_writer :type_handling
-      attr_accessor :user_agent
+      attr_accessor :user_agent, :trace
 
       def initialize(user_agent)
+        @trace = false
         @user_agent = user_agent
         @type_preferences = Hash.new{|h,k| k.nil? ? "*/*" : h[nil]}
       end
@@ -27,6 +28,8 @@ module RoadForest
       def make_request(method, url, graph, retry_limit=5)
         headers = {"Accept" => type_handling.parsers.types.accept_header}
         body = nil
+
+        trace_graph("OUT", graph)
 
         if(%w{POST PUT PATCH}.include? method.upcase)
           content_type = best_type_for(url)
@@ -49,6 +52,17 @@ module RoadForest
         retry
       end
 
+      def trace_graph(tag, graph)
+        return unless @trace
+        require 'rdf/turtle'
+        @trace = $stderr unless @trace.respond_to?(:puts)
+        @trace.puts "<#{tag}"
+        if graph.respond_to?(:dump)
+          @trace.puts graph.dump(:ntriples, :standard_prefixes => true, :prefixes => { "af" => "http://judsonlester.info/affordance#"})
+        end
+        @trace.puts "#{tag}>"
+      end
+
       def type_handling
         @type_handling || ContentHandling.rdf_engine
       end
@@ -66,6 +80,8 @@ module RoadForest
       def build_response(url, response)
         parser = type_handling.choose_parser(response.headers["Content-Type"])
         graph = parser.to_graph(url, response.body_string)
+
+        trace_graph("IN", graph)
 
         response = GraphResponse.new(url, response)
         response.graph = graph

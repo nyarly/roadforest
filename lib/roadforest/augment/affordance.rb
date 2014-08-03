@@ -6,7 +6,22 @@ module RoadForest
     module Affordance
       Af = Graph::Af
 
+      module GrantTokens
+        def each_grant_token(method, term)
+          grant_route = term.router.mapped_route_for_name(term.route.name, :perm, {})
+          term.resource.required_grants(method).each do |grant|
+            grant_path = grant_route.build_path(:grant_name => grant)
+            yield ::RDF::URI.new(canonical_uri.join(grant_path)) #XXX magical route name
+          end
+        rescue KeyError
+          term.resource.required_grants(method).each do |grant|
+            yield grant
+          end
+        end
+      end
+
       class Remove < Augmentation
+        include GrantTokens
         register_for_subjects
 
         def apply(term)
@@ -14,14 +29,15 @@ module RoadForest
             node = ::RDF::Node.new
             yield [node, ::RDF.type, Af.Remove]
             yield [node, Af.target, term.uri]
-            term.resource.required_grants("DELETE").each do |grant|
-              yield [node, Af.authorizedBy, grant]
+            each_grant_token("DELETE", term) do |token|
+              yield [node, Af.authorizedBy, token]
             end
           end
         end
       end
 
       class Links < Augmentation
+        include GrantTokens
         register_for_subjects
         register_for_objects
 
@@ -48,8 +64,8 @@ module RoadForest
                 yield [node, ::RDF.type, Af.Navigate]
                 yield [node, Af.target, term.uri]
               end
-              term.resource.required_grants("GET").each do |grant|
-                yield [node, Af.authorizedBy, grant]
+              each_grant_token("GET", term) do |token|
+                yield [node, Af.authorizedBy, token]
               end
             end
           end
@@ -57,6 +73,8 @@ module RoadForest
       end
 
       class PayloadAugmentation < Augmentation
+        include GrantTokens
+
         def get_payload(resource)
 
         end
@@ -79,10 +97,9 @@ module RoadForest
             node = ::RDF::Node.new
             yield [node, ::RDF.type, affordance_type]
             yield [node, Af.target, term.uri]
-            term.resource.required_grants(http_method).each do |grant|
-              yield [node, Af.authorizedBy, grant]
+            each_grant_token(http_method, term) do |token|
+              yield [node, Af.authorizedBy, token]
             end
-
             payload = get_payload(resource)
             unless payload.nil?
               yield [node, Af.payload, payload.root]

@@ -264,7 +264,7 @@ module RoadForest
 
         def attrs
           _decorated_.attrs.merge(
-            :method => "POST", :action => subject.join("put")
+            :method => "POST", :action => subject / "put"
           )
         end
       end

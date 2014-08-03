@@ -32,6 +32,10 @@ module RoadForest::Graph
       relevant_prefixes_for_graph(origin_graph)
     end
 
+    def each_statement(&block)
+      origin_graph.each_statement(&block)
+    end
+
     def each(&block)
       origin_graph.each(&block)
     end

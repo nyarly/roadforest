@@ -115,12 +115,18 @@ module RoadForest
       def initialize(xpath, value, trace)
         @xpath, @value, @trace = xpath, value, trace
       end
-      attr_reader :xpath, :value, :trace
+      attr_reader :xpath, :value, :trace, :actual
+      attr_accessor :found
+
+      def description
+        "should match #{@xpath.inspect}"
+      end
 
       def matches?(actual)
+        @actual = actual
         @doc = Nokogiri::HTML.parse(actual)
         @namespaces = @doc.namespaces.merge("xhtml" => "http://www.w3.org/1999/xhtml", "xml" => "http://www.w3.org/XML/1998/namespace")
-        found = @doc.root.at_xpath(xpath, @namespaces)
+        self.found = @doc.root.at_xpath(xpath, @namespaces)
         case value
         when false
           found.nil?
@@ -135,8 +141,7 @@ module RoadForest
         end
       end
 
-      def failure_message_for_should(actual)
-        trace ||= debug
+      def failure_message_for_should
         msg =
           case value
           when true
@@ -151,8 +156,7 @@ module RoadForest
         msg
       end
 
-      def failure_message_for_should_not(actual)
-        trace ||= debug
+      def failure_message_for_should_not
         msg = "expected that #{xpath.inspect} would not be #{value.inspect} in:\n" + actual.to_s
         msg +=  "\nDebug:#{trace.join("\n")}" if trace
         msg
@@ -217,7 +221,6 @@ module RoadForest
       end
 
       def subtract(one, other)
-        sorted = one.sort_by{|stmt| stmt.to_a}
         one.find_all do |expected_stmt|
           not other.any? do |actual_stmt|
             actual_stmt.eql? expected_stmt

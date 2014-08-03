@@ -14,6 +14,7 @@ module RoadForest
       include Graph::Normalization
 
       attr_writer :valise, :tilt_cache
+      attr_accessor :haml_options
 
       def valise
         @valise ||= Valise.define do
@@ -33,9 +34,10 @@ module RoadForest
         templates = RDFaWriter::TemplateHandler.new
         templates.valise = valise
         templates.template_cache = tilt_cache
+        templates.haml_options = haml_options
 
         engine = RDFaWriter::RenderEngine.new(rdf, debug) do |engine|
-          engine.graph_name = rdf.context
+          #engine.graph_name = nil #was: rdf.context
           engine.base_uri = base_uri
           engine.standard_prefixes = true
           engine.template_handler = templates
@@ -53,10 +55,15 @@ module RoadForest
           prefixes[prefix.to_sym] = prefixes[prefix]
         end
         engine.prefixes.merge! prefixes
-
-        #$stderr.puts debug
+        engine.prefixes.keys.each do |key|
+          if key.is_a? String
+            engine.prefixes[key.to_sym] = engine.prefixes.delete(key)
+          end
+        end
 
         result = engine.render_document
+        #puts "\n#{__FILE__}:#{__LINE__} => \n#{debug.join("\n")}"
+        return result
       end
 
       def network_to_local(base_uri, source)

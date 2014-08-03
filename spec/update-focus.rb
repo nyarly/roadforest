@@ -124,21 +124,22 @@ describe RoadForest::Graph::GraphFocus, "with UpdateManager" do
   end
 
   it "should add a list to the target graph" do
-    list_focus = updater.add_list(Voc[:list])
     nodes = []
-    list_focus.append_node do |node|
-      nodes << node
-      node[Voc[:d]] = 107
-    end
+    list_focus = updater.add_list(Voc[:list]) do |list_focus|
+      list_focus.append_node do |node|
+        nodes << node
+        node[Voc[:d]] = 107
+      end
 
-    list_focus.append_node do |node|
-      nodes << node
-      node[Voc[:d]] = 109
-    end
+      list_focus.append_node do |node|
+        nodes << node
+        node[Voc[:d]] = 109
+      end
 
-    list_focus.append_node do |node|
-      nodes << node
-      node[Voc[:d]] = 113
+      list_focus.append_node do |node|
+        nodes << node
+        node[Voc[:d]] = 113
+      end
     end
 
     list = ::RDF::List.new(list_focus.subject, target_graph)

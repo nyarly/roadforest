@@ -129,7 +129,7 @@ module RoadForest
           pattern [ :affordance, RDF.type, Af.Update ]
         end
         query(update_payload_query).each do |solution|
-          yield(solution[:resource], parceller.graph_for(solution[:pattern_root]))
+          yield(solution[:resource], solution[:pattern_root], parceller.graph_for(solution[:pattern_root]))
         end
       end
 
@@ -143,7 +143,7 @@ module RoadForest
         marked_inserts = []
         marked_deletes = []
 
-        each_payload do |root, graph_pattern|
+        each_payload do |root, pattern_root, graph_pattern|
           next unless all_subjects.has_key?(root)
 
           marked_inserts.clear
@@ -151,6 +151,7 @@ module RoadForest
 
           matcher = PathMatcher.new
           matcher.pattern = graph_pattern
+          matcher.pattern_root = pattern_root
 
           source_match = matcher.match(root, source_graph)
 

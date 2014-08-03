@@ -3,6 +3,9 @@
   - objects.each do |object|
     - if object.is_subject?
       = rdfpost_curie("o", object.subject)
+      %label{}
+        %span= get_predicate_name(predicate)
+        %input{object.attrs.merge(:readonly => true)}
     - elsif object.attrs.empty?
       = yield(object)
     - else

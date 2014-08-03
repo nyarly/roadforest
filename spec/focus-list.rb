@@ -21,6 +21,30 @@ describe RoadForest::Graph::FocusList do
     focus.as_list
   end
 
+  it "should render correctly empty" do
+    focus.add_list(:rdf, :value)
+
+    graph.should match_query { |query|
+      query.pattern(:object => RDF.nil)
+    }
+  end
+
+  it "should raise error if trying to append to an empty list" do
+    list = focus.add_list(:rdf, :value)
+
+    expect{ list.append_node("#1") }.to raise_error
+  end
+
+  it "should append nodes in an added list" do
+    focus.add_list(:rdf, :value) do |list|
+      list.append_node("#1")
+    end
+
+    graph.should match_query { |query|
+      query.pattern(:object => RDF::URI.new("urn:root#1"))
+    }
+  end
+
   it "should add an item to graph" do
     list.append_node("#test")
 

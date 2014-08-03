@@ -19,7 +19,8 @@ describe RoadForest::RemoteHost, "#forbidden?" do
       end
 
       def fill_graph(graph)
-        graph[:lc, "next"] = path_for(:restricted)
+        graph[:lc, "next"] = url_for(:restricted) #XXX this was path_for
+        #XXX it should crash and burn, not quietly work
       end
     end
   end
@@ -31,14 +32,14 @@ describe RoadForest::RemoteHost, "#forbidden?" do
       def required_grants(method)
         services.authz.build_grants do |builder|
           (1..5).each do |idx|
-            build.add(:extra_random_grant, :idx => idx)
+            builder.add(:extra_random_grant, :idx => idx)
           end
 
           builder.add(:clearance_level_one) #buried on purpose
 
           builder.add(:doesnt_need_params, :x => 1, :y => 3)
           (6..10).each do |idx|
-            build.add(:extra_random_grant, :idx => idx)
+            builder.add(:extra_random_grant, :idx => idx)
           end
         end
       end
@@ -69,10 +70,11 @@ describe RoadForest::RemoteHost, "#forbidden?" do
     RoadForest::Application::ServicesHost.new.tap do |host|
       host.router.add :root      , []                  , :read_only, root_interface_class
       host.router.add :restricted, ["auth_only"]       , :read_only, authz_interface_class
-      host.router.add :perm      , ["perm",:grant]     , :read_only, RoadForest::Utility::Grant
-      host.router.add :perm_list , ["perm_list",:grant], :read_only, RoadForest::Utility::GrantList
+      host.router.add :perm      , ["perm", :grant_name]     , :read_only, RoadForest::Utility::Grant
+      host.router.add :perm_list , ["perm_list", :username], :read_only, RoadForest::Utility::GrantList
 
-      host.root_url = "http://localhost:8778"
+      host.root_url = "http://localhost:8778/"
+      host.authz.cleartext_grants!
       host.authz.authenticator.add_account("roy",     "secret",  "token")
       host.authz.authenticator.add_account("gregg",   "secret",  "token")
       host.authz.authenticator.add_account("david",   "secret",  "token")
@@ -86,10 +88,11 @@ describe RoadForest::RemoteHost, "#forbidden?" do
   let :server do
     require 'roadforest/type-handlers/jsonld'
     RoadForest::TestSupport::RemoteHost.new(services).tap do |server|
-      #server.trace = true
-#      server.graph_transfer.type_handling = RoadForest::ContentHandling::Engine.new.tap do |engine|
-#        engine.add RoadForest::TypeHandlers::JSONLD.new, "application/ld+json"
-#      end
+      server.http_trace = true
+      server.graph_trace = true
+      server.graph_transfer.type_handling = RoadForest::ContentHandling::Engine.new.tap do |engine|
+        engine.add RoadForest::TypeHandlers::JSONLD.new, "application/ld+json"
+      end
     end
   end
 
@@ -126,14 +129,45 @@ describe RoadForest::RemoteHost, "#forbidden?" do
         authzs.should_not be_empty
       end
 
-      it "should return 200 for auth'd perm"
-      it "should return 401 for nonesense perm"
-      it "should return false for forbidden?(resource)"
+      it "should return 200 for auth'd perm" do
+          response = server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/clearance_level_one"))
+          response.status.should == 200
+      end
+      it "should return 401 for nonsense perm" do
+        expect{
+          server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/sillysillysillysilly"))
+        }.to raise_error(RoadForest::HTTP::Retryable)
+      end
+      it "should return false for forbidden?(resource)" do
+        forbidden = nil
+        server.getting do |graph|
+          resource = graph[[:lc, "next"]]
+          forbidden = server.forbidden?("GET", resource)
+        end
+
+        forbidden.should be_false
+      end
       it "should take no more than 3 requests to determine forbidden?"
     end
     describe "for unauthorized user" do
-      it "should return 401 for auth'd perm"
-      it "should return true for forbidden?(resource)"
+      before :each do
+        server.add_credentials("david", "secret")
+      end
+
+      it "should return 401 for auth'd perm" do
+        expect{
+          server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/.q.l.clearance_level_oneq."))
+        }.to raise_error(RoadForest::HTTP::Retryable)
+      end
+      it "should return true for forbidden?(resource)" do
+        forbidden = nil
+        server.getting do |graph|
+          resource = graph[[:lc, "next"]]
+          forbidden = server.forbidden?("GET", resource)
+        end
+
+        forbidden.should be_true
+      end
       it "should take no more than 3 requests to determine forbidden?"
     end
   end

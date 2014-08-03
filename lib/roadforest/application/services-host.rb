@@ -19,6 +19,10 @@ module RoadForest
         @canonical_host ||= RDF::URI.intern(@root_url)
       end
 
+      def augmenter
+        @augmenter ||= Augment::Augmenter.new(self)
+      end
+
       def dispatcher
         @dispatcher ||= Dispatcher.new(self)
       end

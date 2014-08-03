@@ -29,7 +29,8 @@ module RoadForest::TypeHandlers
         end.handle_templates do |config|
           #At some point, should look into using HTML entities to preserve
           #whitespace in XMLLiterals
-          config.add_type("haml", { :template_cache => template_cache, :template_options => haml_options || {:ugly => true} })
+          options = {:format => :xhtml}.merge(haml_options || {:ugly => true})
+          config.add_type("haml", { :template_cache => template_cache, :template_options => options })
         end
       end
 
@@ -56,10 +57,12 @@ module RoadForest::TypeHandlers
       attr_accessor :prefixes, :base_uri, :lang, :standard_prefixes, :graph, :titles, :doc_title, :graph_name
       attr_accessor :template_handler
       attr_reader :debug
+      attr_accessor :debugging_comments
 
       attr_reader :decoration_set
 
       def initialize(graph, debug=nil)
+        @debugging_comments = false
         @debug = debug
         @graph = graph
         @graph_name = nil
@@ -171,7 +174,6 @@ module RoadForest::TypeHandlers
           !seen.include?(s)
         end.each do |class_uri|
           graph.query(:predicate => RDF.type, :object => class_uri).map {|st| st.subject}.sort.uniq.each do |subject|
-            #add_debug {"order_subjects: #{subject.inspect}"}
             subjects << subject
             seen[subject] = true
           end
@@ -184,9 +186,9 @@ module RoadForest::TypeHandlers
           [r.is_a?(RDF::Node) ? 1 : 0, ref_count(r), r]
         end.sort
 
-        add_debug {"order_subjects: #{recursable.inspect}"}
-
         subjects += recursable.map{|r| r.last}
+        add_debug {"order_subjects: (final) \n  #{subjects.join("\n  ")}"}
+        return subjects
       end
 
       def order_properties(properties)
@@ -231,21 +233,21 @@ module RoadForest::TypeHandlers
         curie =
           case
           when @uri_to_term_or_curie.has_key?(uri)
-            add_debug {"get_curie(#{uri}): uri_to_term_or_curie #{@uri_to_term_or_curie[uri].inspect}"}
+            add_debug {"get_curie(#{uri}): cached: #{@uri_to_term_or_curie[uri].inspect}"}
             return @uri_to_term_or_curie[uri]
           when base_uri && uri.index(base_uri.to_s) == 0
-            add_debug {"get_curie(#{uri}): base_uri (#{uri.sub(base_uri.to_s, "")})"}
+            add_debug {"get_curie(#{uri}): base_uri: (#{base_uri} + #{uri.sub(base_uri.to_s, "")})"}
             uri.sub(base_uri.to_s, "")
           when @vocabulary && uri.index(@vocabulary) == 0
-            add_debug {"get_curie(#{uri}): vocabulary"}
+            add_debug {"get_curie(#{uri}): vocabulary: #{@vocabulary.inspect}"}
             uri.sub(@vocabulary, "")
           when u = @uri_to_prefix.keys.detect {|u| uri.index(u.to_s) == 0}
-            add_debug {"get_curie(#{uri}): uri_to_prefix"}
+            add_debug {"get_curie(#{uri}): uri_to_prefix: #{@uri_to_prefix[u]}"}
             prefix = @uri_to_prefix[u]
             @prefixes[prefix] = u
             uri.sub(u.to_s, "#{prefix}:")
           when @standard_prefixes && vocab = RDF::Vocabulary.detect {|v| uri.index(v.to_uri.to_s) == 0}
-            add_debug {"get_curie(#{uri}): standard_prefixes"}
+            add_debug {"get_curie(#{uri}): standard_prefixes: #{vocab}"}
             prefix = vocab.__name__.to_s.split('::').last.downcase
             @prefixes[prefix] = vocab.to_uri
             uri.sub(vocab.to_uri.to_s, "#{prefix}:")
@@ -288,8 +290,6 @@ module RoadForest::TypeHandlers
       end
 
       def render(context)
-        #puts "\n#{__FILE__.sub(/^#{Dir.pwd}/,'')}:#{__LINE__} =>
-        ##{context.class.inspect}"
         add_debug "render"
         if context.render_checked
           return ""
@@ -297,11 +297,17 @@ module RoadForest::TypeHandlers
         template = find_environment_template(context)
         depth do
           add_debug{ "template: #{template.file}" }
+          add_debug{ "options: #{template.options}" }
           add_debug{ "context: #{context.class.name}"}
+          add_debug{ "  #{context.attrs}" } if context.respond_to?(:attrs)
 
           begin
             @render_stack.push context
-            template.render(context) do |item|
+            prefix = ""
+            if debugging_comments
+              prefix = "<!-- #{template.file} -->"
+            end
+            prefix + template.render(context) do |item|
               context.yielded(item)
             end.sub(/\n\Z/,'')
           ensure
@@ -311,7 +317,7 @@ module RoadForest::TypeHandlers
       end
 
       def is_list?(object)
-        !(object == RDF.nil || (l = RDF::List.new(object, @graph)).invalid?)
+        !(object == RDF.nil || (RDF::List.new(object, @graph)).invalid?)
       end
 
       def subject_done(subject)
@@ -330,6 +336,15 @@ module RoadForest::TypeHandlers
           properties[key] << st.object
         end
         properties
+      end
+
+      def build_env(klass)
+        env = klass.new(self)
+        env.heading_predicates = heading_predicates
+        env.lang = lang
+        env.parent = @render_stack.last
+        yield(env)
+        return decoration_set.decoration_for(env)
       end
 
       def document_env
@@ -363,15 +378,6 @@ module RoadForest::TypeHandlers
           env.predicate = predicate
           env.inlist = nil
         end
-      end
-
-      def build_env(klass)
-        env = klass.new(self)
-        env.heading_predicates = heading_predicates
-        env.lang = lang
-        env.parent = @render_stack.last
-        yield(env)
-        return decoration_set.decoration_for(env)
       end
 
       def object_env(predicate, object)

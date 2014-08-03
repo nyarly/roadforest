@@ -64,9 +64,14 @@ module FileManagementExample
       end
 
       def fill_graph(graph)
-        graph.add_list(:lc, "needs") do |list|
-          services.file_records.each do |record|
-            if !record.resolved
+        unresolved = services.file_records.select do |record|
+          !record.resolved
+        end
+        if unresolved.empty?
+          graph.add_list(:lc, "needs")
+        else
+          graph.add_list(:lc, "needs") do |list|
+            unresolved.each do |record|
               need = copy_interface(graph, :need, '*' => [record.name])
               need[:lc, :name]
               need[:lc, :digest]

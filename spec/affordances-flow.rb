@@ -138,7 +138,7 @@ describe "The full affordances flow" do
     end
 
     let :put_uri do
-      EX.a.join("put").to_s
+      (EX.a / "put").to_s
     end
 
     it "should parse RDFa back to base_graph" do
@@ -227,19 +227,19 @@ describe "The full affordances flow" do
       RDF::Repository.new.tap do |graph|
         graph << [caff, ::RDF.type, Aff.Update]
         graph << [caff, Aff.target, EX.a]
-        graph << [caff, Aff.authorizedBy, "[:admin]"]
+        graph << [caff, Aff.authorizedBy, "admin"]
         graph << [uaff, ::RDF.type, Aff.Create]
         graph << [uaff, Aff.target, EX.a]
-        graph << [uaff, Aff.authorizedBy, "[:admin]"]
+        graph << [uaff, Aff.authorizedBy, "admin"]
         graph << [daff, ::RDF.type, Aff.Remove]
         graph << [daff, Aff.target, EX.a]
-        graph << [daff, Aff.authorizedBy, "[:admin]"]
+        graph << [daff, Aff.authorizedBy, "admin"]
         graph << [naff, ::RDF.type, Aff.Navigate]
         graph << [naff, Aff.target, EX.a]
-        graph << [naff, Aff.authorizedBy, "[:admin]"]
+        graph << [naff, Aff.authorizedBy, "admin"]
         graph << [onaff, ::RDF.type, Aff.Navigate]
         graph << [onaff, Aff.target, EX.z]
-        graph << [onaff, Aff.authorizedBy, "[:admin]"]
+        graph << [onaff, Aff.authorizedBy, "admin"]
       end
     end
 
@@ -271,16 +271,16 @@ describe "The full affordances flow" do
       RDF::Repository.new.tap do |graph|
         graph << [caff, ::RDF.type, Aff.Update]
         graph << [caff, Aff.target, EX.a]
-        graph << [caff, Aff.authorizedBy, "[:admin]"]
+        graph << [caff, Aff.authorizedBy, "admin"]
         graph << [uaff, ::RDF.type, Aff.Create]
         graph << [uaff, Aff.target, EX.a]
-        graph << [uaff, Aff.authorizedBy, "[:admin]"]
+        graph << [uaff, Aff.authorizedBy, "admin"]
         graph << [daff, ::RDF.type, Aff.Remove]
         graph << [daff, Aff.target, EX.a]
-        graph << [daff, Aff.authorizedBy, "[:admin]"]
+        graph << [daff, Aff.authorizedBy, "admin"]
         graph << [naff, ::RDF.type, Aff.Navigate]
         graph << [naff, Aff.target, EX.a]
-        graph << [naff, Aff.authorizedBy, "[:admin]"]
+        graph << [naff, Aff.authorizedBy, "admin"]
       end
     end
 
@@ -313,19 +313,19 @@ describe "The full affordances flow" do
       RDF::Repository.new.tap do |graph|
         graph << [caff, ::RDF.type, Aff.Update]
         graph << [caff, Aff.target, EX.a]
-        graph << [caff, Aff.authorizedBy, "[:admin]"]
+        graph << [caff, Aff.authorizedBy, "admin"]
 
         graph << [uaff, ::RDF.type, Aff.Create]
         graph << [uaff, Aff.target, EX.a]
-        graph << [uaff, Aff.authorizedBy, "[:admin]"]
+        graph << [uaff, Aff.authorizedBy, "admin"]
 
         graph << [daff, ::RDF.type, Aff.Remove]
         graph << [daff, Aff.target, EX.a]
-        graph << [daff, Aff.authorizedBy, "[:admin]"]
+        graph << [daff, Aff.authorizedBy, "admin"]
 
         graph << [naff, ::RDF.type, Aff.Navigate]
         graph << [naff, Aff.target, EX.a]
-        graph << [naff, Aff.authorizedBy, "[:admin]"]
+        graph << [naff, Aff.authorizedBy, "admin"]
 
         graph << [zaff, ::RDF.type, Aff.Null]
         graph << [zaff, Aff.target, EX.z]
@@ -367,19 +367,19 @@ describe "The full affordances flow" do
       RDF::Repository.new.tap do |graph|
         graph << [caff, ::RDF.type, Aff.Update]
         graph << [caff, Aff.target, EX.a]
-        graph << [caff, Aff.authorizedBy, "[:admin]"]
+        graph << [caff, Aff.authorizedBy, "admin"]
         graph << [uaff, ::RDF.type, Aff.Create]
         graph << [uaff, Aff.target, EX.a]
-        graph << [uaff, Aff.authorizedBy, "[:admin]"]
+        graph << [uaff, Aff.authorizedBy, "admin"]
         graph << [daff, ::RDF.type, Aff.Remove]
         graph << [daff, Aff.target, EX.a]
-        graph << [daff, Aff.authorizedBy, "[:admin]"]
+        graph << [daff, Aff.authorizedBy, "admin"]
         graph << [naff, ::RDF.type, Aff.Navigate]
         graph << [naff, Aff.target, EX.a]
-        graph << [naff, Aff.authorizedBy, "[:admin]"]
+        graph << [naff, Aff.authorizedBy, "admin"]
         graph << [eaff, ::RDF.type, Aff.Embed]
         graph << [eaff, Aff.target, EX.z]
-        graph << [eaff, Aff.authorizedBy, "[:admin]"]
+        graph << [eaff, Aff.authorizedBy, "admin"]
       end
     end
 
@@ -411,16 +411,17 @@ describe "The full affordances flow" do
       RDF::Repository.new.tap do |graph|
         graph << [caff, ::RDF.type, Aff.Update]
         graph << [caff, Aff.target, EX.a]
-        graph << [caff, Aff.authorizedBy, "[:admin]"]
         graph << [uaff, ::RDF.type, Aff.Create]
         graph << [uaff, Aff.target, EX.a]
-        graph << [uaff, Aff.authorizedBy, "[:admin]"]
         graph << [daff, ::RDF.type, Aff.Remove]
         graph << [daff, Aff.target, EX.a]
-        graph << [daff, Aff.authorizedBy, "[:admin]"]
         graph << [naff, ::RDF.type, Aff.Navigate]
         graph << [naff, Aff.target, EX.a]
-        graph << [naff, Aff.authorizedBy, "[:admin]"]
+
+        graph << [caff, Aff.authorizedBy, "admin"]
+        graph << [uaff, Aff.authorizedBy, "admin"]
+        graph << [daff, Aff.authorizedBy, "admin"]
+        graph << [naff, Aff.authorizedBy, "admin"]
       end
     end
 

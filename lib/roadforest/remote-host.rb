@@ -39,8 +39,13 @@ module RoadForest
       @http_client ||= HTTP::ExconAdapter.new(url)
     end
 
-    def trace=(target)
+    def http_trace=(target)
       user_agent.trace = target
+    end
+    alias trace= http_trace=
+
+    def graph_trace=(target)
+      graph_transfer.trace = target
     end
 
     def user_agent
@@ -75,6 +80,56 @@ module RoadForest
         focus.reset
         yield focus
       end
+    end
+
+    def affordance_type(method)
+      case method.downcase
+      when "get"
+        "Navigate"
+      when "post"
+        "Create"
+      when "put"
+        "Update"
+      when "delete"
+        "Destroy"
+      else
+        method #allow passthrough
+      end
+    end
+
+    def have_grant?(url)
+      return (user_agent.make_request("GET", url).status == 200)
+    rescue HTTP::Retryable
+      false
+    end
+
+    def forbidden?(method, focus)
+      graph = SourceRigor::RetrieveManager.new
+      graph.rigor = source_rigor
+      graph.source_graph = focus.access_manager.source_graph
+
+      resource = focus.subject
+
+      annealer = SourceRigor::CredenceAnnealer.new(graph.source_graph)
+      af_type = affordance_type(method)
+      query = SourceRigor::ResourceQuery.new([], {:subject_context => resource}) do
+        pattern [:aff, Graph::Af.target, resource]
+        pattern [:aff, ::RDF.type, Graph::Af[af_type]]
+        pattern [:aff, Graph::Af.authorizedBy, :authz]
+      end
+      permissions = []
+      annealer.resolve do
+        permissions.clear
+        graph.query(query) do |solution|
+          permissions << solution[:authz]
+        end
+      end
+
+      return false if permissions.empty?
+      permissions.each do |grant|
+        return false if have_grant?(grant)
+      end
+      return true
     end
 
     def transaction(manager_class, focus_class, &block)

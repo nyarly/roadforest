@@ -377,6 +377,7 @@ module RoadForest
 
     attr_accessor :pattern, :logging
     attr_reader :completed_child
+    attr_writer :pattern_root
 
     def match(root, graph)
       reset
@@ -410,7 +411,7 @@ module RoadForest
         begin
           roots = pattern.query(:predicate => ::RDF.type, :object => Graph::Path.Root).to_a
           if roots.length != 1
-            raise "A pattern should have exactly one root, has: #{roots.length}\n#{roots.map(&:inspect).join('\n')}"
+            raise "A pattern should have exactly one root, has: #{roots.length}\n#{roots.map(&:inspect).join("\n")}"
           end
           roots.first.subject
         end

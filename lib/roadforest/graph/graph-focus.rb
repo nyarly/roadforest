@@ -153,12 +153,24 @@ module RoadForest::Graph
       node
     end
 
+    def empty_list(property, extra=nil)
+      unless extra.nil?
+        property = normalize_property([property, extra])
+      end
+      list
+    end
+
     def add_list(property, extra=nil)
       unless extra.nil?
         property = normalize_property([property, extra])
       end
-      list = add_node(property).as_list
-      yield list if block_given?
+      if block_given?
+        list = add_node(property).as_list
+        yield list
+      else
+        list = FocusList.new
+        add(property, list.subject)
+      end
       list
     end
     #### End of old GraphFocus
@@ -178,8 +190,6 @@ module RoadForest::Graph
       return nil if value.nil?
       if RDF::Literal === value
         value.object
-      elsif value == RDF.nil
-        nil
       else
         wrap_node(value)
       end

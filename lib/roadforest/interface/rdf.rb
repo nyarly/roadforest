@@ -76,6 +76,7 @@ module RoadForest
       def payload_pair
         root_node = ::RDF::Node.new
         graph = ::RDF::Graph.new
+        graph << [root_node, ::RDF.type, Graph::Path.Root]
         yield root_node, graph
         return Payload.new(root_node, graph)
       end
@@ -109,8 +110,9 @@ module RoadForest
       end
 
       def payload_focus(&block)
-        pair = payload_pair
-        return start_focus(pair.graph, pair.root, &block)
+        payload_pair do |root, graph|
+          start_focus(graph, root, &block)
+        end
       end
 
       def copy_interface(node, route_name, params=nil)
@@ -136,15 +138,19 @@ module RoadForest
         current_graph
       end
 
+      def augment_graph(graph)
+        services.augmenter.augment(graph)
+      end
+
       def current_graph
         return response_data if response_values.has_key?(:data)
         new_graph
       end
 
       def new_graph
-        self.response_data = start_focus do |focus|
+        self.response_data = augment_graph(start_focus do |focus|
           fill_graph(focus)
-        end
+        end)
       end
     end
   end
