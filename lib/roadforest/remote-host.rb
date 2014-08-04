@@ -105,10 +105,17 @@ module RoadForest
       template = Addressable::Template.new(grant_list_pattern)
       grant_list_url = template.expand(vars)
       response = graph_transfer.make_request("GET", grant_list_url, nil)
-      puts "\n#{__FILE__}:#{__LINE__} => #{response.inspect}"
       if response.status == 200
-        response.graph
+        response.graph.query(:predicate => Graph::Af.grants).map do |stmt|
+          stmt.object
+        end
       end
+    end
+
+    def grant_in_list(url, creds)
+      list = grant_list(creds)
+      return false if list.nil?
+      return list.include?(url)
     end
 
     def have_grant?(url)
@@ -127,14 +134,12 @@ module RoadForest
           response.graph.query(query) do |solution|
             self.grant_list_pattern = solution[:pattern].value
           end
-          list = grant_list(creds) unless grant_list_pattern.nil?
+          grant_in_list(url, creds) unless grant_list_pattern.nil?
         end
-        response.status == 200 #XXX mismatch between graph_xfer and UA
       else
-        list = grant_list(creds)
+        grant_in_list(url, creds)
       end
     rescue HTTP::Retryable
-      puts "\n#{__FILE__}:#{__LINE__} => #{response.inspect}"
       false
     end
 

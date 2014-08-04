@@ -100,7 +100,7 @@
 <af:target> a rdf:Property ;
   rdfs:domain <#Affordance> ;
   rdfs:range rdfs:Resource , <#ResourceTemplate> ;
-  rdfs:comment """The URL to which data is to be transmitted by this affordance."""
+  rdfs:comment """The URL to which data is to be transmitted by this affordance.""" .
 
 # Payload
 

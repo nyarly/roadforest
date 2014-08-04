@@ -25,10 +25,17 @@ module RoadForest
       end
 
       def new_graph
+        perm_route = nil
+        begin
+          perm_route = path_provider.route_for_name(:perm)
+        rescue KeyError
+        end
         start_focus do |focus|
-          focus.add_list(:rdf, :value) do |list|
-            data.each do |grant|
-              list << grant
+          data.each do |grant|
+            if perm_route.nil?
+              focus.add(:af, :grants,  grant)
+            else
+              focus.add(:af, :grants,  path_provider.url_for(:perm, {:grant_name => grant}))
             end
           end
         end

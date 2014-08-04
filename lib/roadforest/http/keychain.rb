@@ -49,7 +49,7 @@ module RoadForest
         lookup_url.path = "/"
         lookup_url = lookup_url.to_s
         realm ||= realm_for_url(url)
-        creds = @with_realm[[lookup_url,realm]] || @with_realm[[lookup_url, :default]]
+        creds = @with_realm[[lookup_url,realm]] || @with_realm[[lookup_url, :default]] #XXX needs thinking: send default creds? prior to challenge?
         if creds.nil? and not realm.nil?
           creds = missing_credentials(url, realm)
           unless creds.nil?

@@ -59,6 +59,7 @@ module RoadForest::Graph
         the tokens be defreferenceable, and that they be accessible
         iff the user is authorized to activate the affordance in
         question.)
+    property :grants
     property :controlName, :comment =>
       %(Valid values are limited per application. Examples include
         'Media-Type', 'Encoding' or 'EntityTag')
