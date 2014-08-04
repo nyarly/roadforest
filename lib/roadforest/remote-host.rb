@@ -7,6 +7,7 @@ require 'roadforest/graph/post-focus'
 require 'roadforest/http/user-agent'
 require 'roadforest/http/graph-transfer'
 require 'roadforest/http/adapters/excon'
+require 'addressable/template'
 
 module RoadForest
   # This is a client's main entry point in RoadForest - we instantiate a
@@ -25,6 +26,8 @@ module RoadForest
       self.url = well_known_url
     end
     attr_reader :url
+    attr_accessor :grant_list_pattern
+    attr_writer :http_client
 
     def url=(string)
       @url = normalize_resource(string)
@@ -34,7 +37,6 @@ module RoadForest
       SourceRigor::GraphStore.new
     end
 
-    attr_writer :http_client
     def http_client
       @http_client ||= HTTP::ExconAdapter.new(url)
     end
@@ -97,9 +99,42 @@ module RoadForest
       end
     end
 
+
+    def grant_list(creds)
+      vars = { :username => creds.user.to_s }
+      template = Addressable::Template.new(grant_list_pattern)
+      grant_list_url = template.expand(vars)
+      response = graph_transfer.make_request("GET", grant_list_url, nil)
+      puts "\n#{__FILE__}:#{__LINE__} => #{response.inspect}"
+      if response.status == 200
+        response.graph
+      end
+    end
+
     def have_grant?(url)
-      return (graph_transfer.make_request("GET", url, nil).status == 200) #XXX mismatch between graph_xfer and UA
+      creds = user_agent.keychain.credentials(url)
+      if grant_list_pattern.nil? or creds.nil?
+        response = graph_transfer.make_request("GET", url, nil)
+        case response.status
+        when 200
+          return true
+        when 401
+          query = ::RDF::Query.new do
+            pattern [:af, ::RDF.type, Graph::Af.Navigate]
+            pattern [:af, Graph::Af.target, :pnode]
+            pattern [:pnode, Graph::Af.pattern, :pattern]
+          end
+          response.graph.query(query) do |solution|
+            self.grant_list_pattern = solution[:pattern].value
+          end
+          list = grant_list(creds) unless grant_list_pattern.nil?
+        end
+        response.status == 200 #XXX mismatch between graph_xfer and UA
+      else
+        list = grant_list(creds)
+      end
     rescue HTTP::Retryable
+      puts "\n#{__FILE__}:#{__LINE__} => #{response.inspect}"
       false
     end
 

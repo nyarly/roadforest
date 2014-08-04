@@ -8,8 +8,10 @@ RSpec.configure do |config|
     %r{gems/rspec-expectations}
   ]
   config.run_all_when_everything_filtered = true
-  config.add_formatter(Cadre::RSpec::NotifyOnCompleteFormatter)
-  config.add_formatter(Cadre::RSpec::QuickfixFormatter)
+end
+
+Dir['spec_support/extra/**/*.rb'].each do |file|
+  require file
 end
 
 VCR.configure do |config|

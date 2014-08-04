@@ -97,14 +97,13 @@ module RoadForest
           if(@authorization == :public || @authorization == :granted)
             return true
           end
-          #response.body = ... "here's where to find your permissions..."
           @interface.authentication_challenge
         end
 
         #XXX Add cache-control headers here
         def finish_request
           if (400..499).include? response.code
-            response.body = error_body(response.code)
+            set_error_body(response.code)
           end
         end
 
@@ -112,11 +111,12 @@ module RoadForest
           @interface.error_data(status)
         end
 
-        def error_body(status)
+        def set_error_body(status)
           data= error_data(status)
           return "" if data.nil?
           renderer = content_engine.choose_renderer(request.headers["Accept"])
-          renderer.local_to_network(request_uri, data)
+          response.headers["Content-Type"] = renderer.type.content_type_header
+          response.body = renderer.local_to_network(request_uri, data)
         end
 
         def resource_exists?

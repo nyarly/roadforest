@@ -26,3 +26,4 @@ cpuprofile.gif
 loop/
 cpuprofile*
 .vimrc
+spec_support/extra/cadre.rb

@@ -52,13 +52,12 @@ describe RoadForest::RemoteHost, "#forbidden?" do
   let :policy_class do
     Class.new(RoadForest::Authorization::Policy) do
       def grants_for(entity)
-        case entity.username
-        when "roy", "gregg"
-          build_grants do |builder|
+        build_grants do |builder|
+          builder.add(:is, :name => entity.username)
+          case entity.username
+          when "roy", "gregg"
             builder.add(:clearance_level_one)
           end
-        else
-          []
         end
       end
     end
@@ -133,11 +132,13 @@ describe RoadForest::RemoteHost, "#forbidden?" do
           response = server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/clearance_level_one"))
           response.status.should == 200
       end
+
       it "should return 401 for nonsense perm" do
         expect{
           server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/sillysillysillysilly"))
         }.to raise_error(RoadForest::HTTP::Retryable)
       end
+
       it "should return false for forbidden?(resource)" do
         forbidden = nil
         server.getting do |graph|
@@ -147,7 +148,15 @@ describe RoadForest::RemoteHost, "#forbidden?" do
 
         forbidden.should be_false
       end
-      it "should take no more than 3 requests to determine forbidden?"
+
+      it "should take no more than 4 requests to determine forbidden?" do
+        server.getting do |graph|
+          resource = graph[[:lc, "next"]]
+          server.forbidden?("GET", resource)
+        end
+
+        server.http_exchanges.length.should <= 4
+      end
     end
     describe "for unauthorized user" do
       before :each do
@@ -156,7 +165,7 @@ describe RoadForest::RemoteHost, "#forbidden?" do
 
       it "should return 401 for auth'd perm" do
         expect{
-          server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/.q.l.clearance_level_oneq."))
+          server.user_agent.make_request('GET', RDF::URI.new("http://localhost:8778/perm/clearance_level_one"))
         }.to raise_error(RoadForest::HTTP::Retryable)
       end
       it "should return true for forbidden?(resource)" do

@@ -44,17 +44,23 @@ module RoadForest
         response(url, realm)
       end
 
-      def response(url, realm)
+      def credentials(url, realm = nil)
         lookup_url = Addressable::URI.parse(url)
         lookup_url.path = "/"
-        creds = @with_realm[[lookup_url.to_s,realm]]
+        lookup_url = lookup_url.to_s
+        realm ||= realm_for_url(url)
+        creds = @with_realm[[lookup_url,realm]] || @with_realm[[lookup_url, :default]]
         if creds.nil? and not realm.nil?
           creds = missing_credentials(url, realm)
           unless creds.nil?
             add_credentials(url, creds, realm)
           end
         end
+        creds
+      end
 
+      def response(url, realm)
+        creds = credentials(url, realm)
         return nil if creds.nil?
 
         return creds.header_value
@@ -64,14 +70,18 @@ module RoadForest
         nil
       end
 
-      def preemptive_response(url)
-        url = Addressable::URI.parse(url)
-
+      def realm_for_url(url)
         while (realm = @realm_for_url[url.to_s]).nil?
           new_url = url.join("..")
-          break if new_url == url
+          return realm if new_url == url
           url = new_url
         end
+        return :default
+      end
+
+      def preemptive_response(url)
+        url = Addressable::URI.parse(url)
+        realm = realm_for_url(url)
 
         return response(url, realm)
       end

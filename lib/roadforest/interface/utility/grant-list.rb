@@ -18,10 +18,18 @@ module RoadForest
         end
       end
 
-      def new_graph(focus)
-        focus.add_list(:az, :grants) do |list|
-          services.authz.policy.build_grants(entity).list.each do |grant|
-            list << grant
+      def data
+        entity = Authorization::AuthEntity.new
+        entity.username = params[:username]
+        services.authz.policy.grants_for(entity)
+      end
+
+      def new_graph
+        start_focus do |focus|
+          focus.add_list(:rdf, :value) do |list|
+            data.each do |grant|
+              list << grant
+            end
           end
         end
       end

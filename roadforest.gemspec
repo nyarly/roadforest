@@ -187,7 +187,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency("rdf-rdfa", "~> 1.1.0")
 
   spec.add_dependency("webmachine", ">= 1.1.0")
-  spec.add_dependency("addressable", "~> 2.2.8")
+  spec.add_dependency("addressable", "~> 2.3.6")
   spec.add_dependency("excon", "~> 0.25")
 
   spec.add_dependency("tilt", ">= 1.3.6")
