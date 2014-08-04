@@ -25,6 +25,12 @@ module RoadForest
       ::RDF::URI.parse(route.build_path(vars))
     end
 
+    def pattern_for(name, vals = nil, extra = nil)
+      vars ||= {}
+      route = route_for_name(name)
+      Addressable::URI.parse(services.canonical_host.to_s).join(route.build_pattern(vals, extra))
+    end
+
     def find_route(&block)
       @dispatcher.find_route(&block)
     end

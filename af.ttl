@@ -109,7 +109,7 @@
 <af:pattern> a rdf:Property ;
   rdfs:domain <#ResourceTemplate> ;
   rdfs:range rdfs:Literal ;
-  rdfs:comment """An IRITemplate (RFC 5xxx) that defines how the template is
+  rdfs:comment """An IRITemplate (RFC 6570) that defines how the template is
     rendered - implicitly, all the parameters of the template are provided as a
     key, value set called param_list, so something like (?param_list*) should
     work like an HTML action=GET form""" .

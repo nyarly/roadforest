@@ -87,6 +87,25 @@ module RoadForest
         end
       end
 
+      def error_data(status)
+        case status
+        when 401
+          begin
+            perm_list_pattern = pattern_for(:perm_list, {}, [:username])
+
+            graph = ::RDF::Graph.new
+            perm_aff = ::RDF::Node.new
+            perm_pattern = ::RDF::Node.new
+            graph << [perm_aff, ::RDF.type, Graph::Af.Navigate]
+            graph << [perm_aff, Graph::Af.target, perm_pattern]
+            graph << [perm_pattern, Graph::Af.pattern, perm_list_pattern]
+
+          rescue KeyError
+            nil
+          end
+        end
+      end
+
       def graph_update(focus)
         fill_graph(focus)
       end

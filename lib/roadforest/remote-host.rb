@@ -98,7 +98,7 @@ module RoadForest
     end
 
     def have_grant?(url)
-      return (user_agent.make_request("GET", url).status == 200)
+      return (graph_transfer.make_request("GET", url, nil).status == 200) #XXX mismatch between graph_xfer and UA
     rescue HTTP::Retryable
       false
     end

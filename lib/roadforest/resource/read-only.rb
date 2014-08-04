@@ -109,7 +109,7 @@ module RoadForest
         end
 
         def error_data(status)
-          nil
+          @interface.error_data(status)
         end
 
         def error_body(status)

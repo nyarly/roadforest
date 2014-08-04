@@ -1,5 +1,5 @@
 module RoadForest
-  class Application
+  class Application #XXX Lotta classes in this one file
     #Embedded in WebMachine's Routes to compose the object structure at need
     class ResourceAdapter
       attr_accessor :resource_builder, :interface_builder, :route_name, :router, :services, :content_engine, :trace, :router
@@ -65,6 +65,38 @@ module RoadForest
           end.join("&")
         end
         return path
+      end
+
+      def build_pattern(vals = nil, extra_vars = nil)
+        vals ||= {}
+        extra_vars ||= []
+        vals = vals.to_hash
+        vals = vals.dup
+        extra_vars -= path_spec.find_all{|segment| segment.is_a? Symbol}
+
+        pattern_spec = resolve_path_spec(vals)
+
+        pattern = pattern_spec.map do |segment|
+          case segment
+          when '*'
+            "{/rest*}"
+          when Symbol
+            "{/#{segment}}"
+          else
+            "/" + segment
+          end
+        end.join("")
+
+        vals.delete('*')
+        unless vals.empty?
+          pattern += "?" + vals.map do |key,value|
+            [key,value].join("=")
+          end.join("&")
+        end
+        unless extra_vars.empty?
+          pattern += "{?#{extra_vars.join(",")}}"
+        end
+        return pattern
       end
 
       def resolve_path_spec(vars)

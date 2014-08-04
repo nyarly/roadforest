@@ -30,6 +30,10 @@ module RoadForest
         ::RDF::URI.new(Addressable::URI.parse(canonical_host.to_s).join(path_for(route_name, params)))
       end
 
+      def pattern_for(route_name, vals = nil, extra = nil)
+        path_provider.pattern_for(route_name, vals, extra)
+      end
+
       def interface_for(route_name = nil, params = nil)
         path_provider.interface_for(route_name, params || self.params)
       end
@@ -79,6 +83,10 @@ module RoadForest
       end
 
       #group Resource interface
+
+      def error_data(status)
+        nil
+      end
 
       def exists?
         !data.nil?
