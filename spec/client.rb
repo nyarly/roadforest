@@ -188,7 +188,7 @@ describe RoadForest::RemoteHost do
 
       it "should return correct content-type" do
         server.http_exchanges.each do |exchange|
-          exchange.response.headers["Content-Type"].should == content_type
+          [content_type, nil].should include(exchange.response.headers["Content-Type"])
         end
       end
     end

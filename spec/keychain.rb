@@ -40,10 +40,19 @@ describe RoadForest::HTTP::Keychain do
   end
 
   describe "#preemptive_response" do
+    subject :source do
+      RoadForest::HTTP::PreparedCredentialSource.new.tap do |source|
+        source.add("http://example.com/test/", username, password)
+      end
+    end
     subject :keychain do
       RoadForest::HTTP::Keychain.new.tap do |chain|
-        chain.add("http://example.com/test/", username, password)
+        chain.add_source(source)
       end
+    end
+
+    before :each do
+      keychain.challenge_response("http://example.com/test/", "Basic Realm='testing'")
     end
 
     it "should return matching creds" do
@@ -58,25 +67,20 @@ describe RoadForest::HTTP::Keychain do
   end
 
   describe "#challenge_response" do
+    subject :source do
+      RoadForest::HTTP::PreparedCredentialSource.new.tap do |source|
+        source.add("http://example.com/test/", username, password)
+      end
+    end
     subject :keychain do
       RoadForest::HTTP::Keychain.new.tap do |chain|
-        chain.add("http://example.com/test/", username, password, "test")
+        chain.add_source(source)
       end
     end
 
-    it "should return matching creds" do
-      creds = keychain.challenge_response("http://example.com/", "Basic realm='test'")
-      creds.should == expected_header
-    end
-
-    it "should not return covering creds" do
+    it "should prepared creds" do
       creds = keychain.challenge_response("http://example.com/test/under/here/", "Basic realm='other'")
-      creds.should be_nil
-    end
-
-    it "should not return non-matching creds" do
-      creds = keychain.challenge_response("http://example.com/", "Basic realm='other'")
-      creds.should be_nil
+      creds.should == expected_header
     end
   end
 end

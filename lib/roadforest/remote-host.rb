@@ -58,8 +58,15 @@ module RoadForest
       @graph_transfer ||= HTTP::GraphTransfer.new(user_agent)
     end
 
+    def prepared_credential_source
+      @prepared_credential_source ||=
+        HTTP::PreparedCredentialSource.new.tap do |prepd|
+        user_agent.keychain.add_source(prepd)
+        end
+    end
+
     def add_credentials(username, password)
-      user_agent.keychain.add(url, username, password)
+      prepared_credential_source.add(url, username, password)
     end
 
     def source_rigor
@@ -84,92 +91,111 @@ module RoadForest
       end
     end
 
-    def affordance_type(method)
-      case method.downcase
-      when "get"
-        "Navigate"
-      when "post"
-        "Create"
-      when "put"
-        "Update"
-      when "delete"
-        "Destroy"
-      else
-        method #allow passthrough
+    class AuthorizationDecider
+      include Graph::Normalization
+
+      def initialize(remote_host, focus)
+        @graph = SourceRigor::RetrieveManager.new
+        graph.rigor = remote_host.source_rigor
+        graph.source_graph = focus.access_manager.source_graph
+
+        @resource = focus.subject
+        @keychain = remote_host.user_agent.keychain
       end
-    end
 
+      attr_reader :graph, :resource, :keychain, :grant_list_pattern
 
-    def grant_list(creds)
-      vars = { :username => creds.user.to_s }
-      template = Addressable::Template.new(grant_list_pattern)
-      grant_list_url = template.expand(vars)
-      response = graph_transfer.make_request("GET", grant_list_url, nil)
-      if response.status == 200
-        response.graph.query(:predicate => Graph::Af.grants).map do |stmt|
+      def forbidden?(method)
+        annealer = SourceRigor::CredenceAnnealer.new(graph.source_graph)
+
+        permissions = []
+        annealer.resolve do
+          permissions.clear
+          @grant_list_pattern = nil
+
+          graph.query(authby_query(method)) do |solution|
+            permissions << solution[:authz]
+          end
+          permissions.each do |grant|
+            return false if have_grant?(grant)
+          end
+        end
+
+        return false if permissions.empty?
+        return true
+      end
+
+      def have_grant?(url)
+        creds = keychain.credentials_for(url)
+        if grant_list_pattern.nil? or creds.nil?
+          direct_check(url)
+        else
+          grant_list(creds).include?(url)
+        end
+      end
+
+      def direct_check(url)
+        statements = graph.query(:subject => url)
+        if !statements.empty?
+          return true
+        else
+          annealer = SourceRigor::CredenceAnnealer.new(graph.source_graph)
+          annealer.resolve do
+            graph.query(list_pattern_query(url)) do |solution|
+              @grant_list_pattern = solution[:pattern].value
+            end
+          end
+          return false
+        end
+      end
+
+      def grant_list(creds)
+        return [] if grant_list_pattern.nil?
+        template = Addressable::Template.new(grant_list_pattern)
+        grant_list_url = uri(template.expand( :username => creds.user.to_s ).to_s)
+        graph.query_resource_pattern(grant_list_url, :subject => grant_list_url, :predicate => Graph::Af.grants).map do |stmt|
           stmt.object
         end
       end
-    end
 
-    def grant_in_list(url, creds)
-      list = grant_list(creds)
-      return false if list.nil?
-      return list.include?(url)
-    end
-
-    def have_grant?(url)
-      creds = user_agent.keychain.credentials(url)
-      if grant_list_pattern.nil? or creds.nil?
-        response = graph_transfer.make_request("GET", url, nil)
-        case response.status
-        when 200
-          return true
-        when 401
-          query = ::RDF::Query.new do
-            pattern [:af, ::RDF.type, Graph::Af.Navigate]
-            pattern [:af, Graph::Af.target, :pnode]
-            pattern [:pnode, Graph::Af.pattern, :pattern]
-          end
-          response.graph.query(query) do |solution|
-            self.grant_list_pattern = solution[:pattern].value
-          end
-          grant_in_list(url, creds) unless grant_list_pattern.nil?
+      def list_pattern_query(url)
+        SourceRigor::ResourceQuery.new([], :subject_context => url) do
+          pattern [:af, ::RDF.type, Graph::Af.Navigate]
+          pattern [:af, Graph::Af.target, :pnode]
+          pattern [:pnode, Graph::Af.pattern, :pattern]
         end
-      else
-        grant_in_list(url, creds)
       end
-    rescue HTTP::Retryable
-      false
+
+      def affordance_type(method)
+        case method.downcase
+        when "get"
+          Graph::Af.Navigate
+        when "post"
+          Graph::Af.Create
+        when "put"
+          Graph::Af.Update
+        when "delete"
+          Graph::Af.Destroy
+        else
+          Graph::Af[method] #allow passthrough
+        end
+      end
+
+      def authby_query(method)
+        af_type = affordance_type(method)
+        resource = self.resource
+        SourceRigor::ResourceQuery.new([], {:subject_context => resource}) do
+          pattern [:aff, Graph::Af.target, resource]
+          pattern [:aff, ::RDF.type, af_type]
+          pattern [:aff, Graph::Af.authorizedBy, :authz]
+        end
+      end
     end
 
     def forbidden?(method, focus)
-      graph = SourceRigor::RetrieveManager.new
-      graph.rigor = source_rigor
-      graph.source_graph = focus.access_manager.source_graph
+      decider = AuthorizationDecider.new(self, focus)
 
-      resource = focus.subject
-
-      annealer = SourceRigor::CredenceAnnealer.new(graph.source_graph)
-      af_type = affordance_type(method)
-      query = SourceRigor::ResourceQuery.new([], {:subject_context => resource}) do
-        pattern [:aff, Graph::Af.target, resource]
-        pattern [:aff, ::RDF.type, Graph::Af[af_type]]
-        pattern [:aff, Graph::Af.authorizedBy, :authz]
-      end
-      permissions = []
-      annealer.resolve do
-        permissions.clear
-        graph.query(query) do |solution|
-          permissions << solution[:authz]
-        end
-      end
-
-      return false if permissions.empty?
-      permissions.each do |grant|
-        return false if have_grant?(grant)
-      end
-      return true
+      decider.forbidden?(method)
     end
 
     def transaction(manager_class, focus_class, &block)

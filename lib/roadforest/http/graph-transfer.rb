@@ -87,7 +87,6 @@ module RoadForest
         response.graph = graph
         return response
       rescue ContentHandling::UnrecognizedType
-        puts "\n#{__FILE__}:#{__LINE__} => #{response.inspect}"
         return UnparseableResponse.new(url, response)
       end
     end

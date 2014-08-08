@@ -22,7 +22,7 @@ module RoadForest
         def params
           Application::Parameters.new do |params|
             params.path_info = @request.path_info
-            params.query_params = @request.query_params
+            params.query_params = @request.query
             params.path_tokens = @request.path_tokens
           end
         end

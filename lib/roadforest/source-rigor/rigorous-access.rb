@@ -33,8 +33,12 @@ module RoadForest
         execute_search(query, &block)
       end
 
-      def resource_pattern_from(pattern)
-        ResourcePattern.from(pattern, {:context_roles => {:subject => resource}, :source_rigor => rigor})
+      def resource_pattern_from(pattern, resource = nil)
+        ResourcePattern.from(pattern, {:context_roles => {:subject => (resource || self.resource)}, :source_rigor => rigor})
+      end
+
+      def query_resource_pattern(resource, pattern, &block)
+        execute_search(resource_pattern_from(pattern, resource), &block)
       end
 
       def query_pattern(pattern, &block)

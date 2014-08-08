@@ -12,7 +12,7 @@ module RoadForest::Graph
     end
   end
 
-  class Af < ::RDF::StrictVocabulary("http://judsonlester.info/affordance#")
+  class Af < ::RDF::StrictVocabulary("http://judsonlester.info/rdf-vocab/affordance#")
 
     # Class definitions
     property :Affordance, :comment =>

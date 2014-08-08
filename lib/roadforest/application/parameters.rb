@@ -21,7 +21,9 @@ module RoadForest
         return path_tokens if field_name == '*'
         @path_info.fetch(field_name) do
           if @query_params.respond_to?(:fetch)
-            @query_params.fetch(field_name)
+            @query_params.fetch(field_name) do
+              @query_params.fetch(field_name.to_s)
+            end
           else
             raise KeyError, "No parameter: #{field_name}"
           end
