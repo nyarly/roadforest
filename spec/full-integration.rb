@@ -45,6 +45,8 @@ describe "RoadForest integration", :integration => true do
         end
       ) do |config|
         config.port = @server_port
+        RoadForest::SSL.add_ca_cert(config, "spec_support/fixtures/ca.cert")
+        RoadForest::SSL.add_client_verify(config)
       end
     end
 
@@ -87,7 +89,13 @@ describe "RoadForest integration", :integration => true do
 
   let :server do
     server = RoadForest::RemoteHost.new(server_url)
-    server.add_credentials("admin","passwerd")
+    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/ca.cert").inspect}"
+    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/client.cert").inspect}"
+    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/client-key.pem").inspect}"
+    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/server.cert").inspect}"
+    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/server-key.pem").inspect}"
+    server.use_ca_cert("spec_support/fixtures/ca.cert")
+    server.use_client_tls("spec_support/fixtures/client-key.pem", "spec_support/fixtures/client.cert")
     #server.trace = true
     server
   end

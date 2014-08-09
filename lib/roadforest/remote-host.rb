@@ -58,6 +58,16 @@ module RoadForest
       @graph_transfer ||= HTTP::GraphTransfer.new(user_agent)
     end
 
+    def use_ca_cert(cert)
+      http_client.connection_defaults.merge!(:ssl_ca_file => cert)
+      http_client.reset_connections
+    end
+
+    def use_client_tls(key, cert)
+      http_client.connection_defaults.merge!(:client_key => key, :client_cert => cert)
+      http_client.reset_connections
+    end
+
     def prepared_credential_source
       @prepared_credential_source ||=
         HTTP::PreparedCredentialSource.new.tap do |prepd|

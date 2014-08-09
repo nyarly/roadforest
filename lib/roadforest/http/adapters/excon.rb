@@ -15,6 +15,10 @@ module RoadForest
         Excon.new(site.to_s, @connection_defaults)
       end
 
+      def reset_connections
+        @connections.clear
+      end
+
       def site_connection(uri)
         uri = Addressable::URI.parse(uri)
         @connections[uri.normalized_site]

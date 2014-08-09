@@ -23,4 +23,16 @@ module RoadForest
     end
     application.run
   end
+
+  module SSL
+    class << self
+      def add_ca_cert(config, cert_file)
+        config.adapter_options.merge!( :SSLCACertificateFile => cert_file)
+      end
+
+      def add_client_verify(config)
+        config.adapter_options.merge!( :SSLEnable => true, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER)
+      end
+    end
+  end
 end
