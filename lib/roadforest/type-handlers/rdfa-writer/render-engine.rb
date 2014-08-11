@@ -107,11 +107,18 @@ module RoadForest::TypeHandlers
 
       def add_debug(message = nil)
         return unless ::RoadForest.debug_io || @debug
-        message ||= ""
-        message = message + yield if block_given?
-        msg = "#{'  ' * @debug_indent}#{message}"
-        RoadForest::debug(msg)
-        @debug << msg.force_encoding("utf-8") if @debug.is_a?(Array)
+        message ||= "  " * @debug_indent
+        begin
+          message = message + yield if block_given?
+        rescue ex
+          message += ex.inspect
+          message += "\n"
+          message += ex.backtrace[0...10].map do |line|
+            ("  " * @debug_indent + 1) + line
+          end
+        end
+        RoadForest::debug(message)
+        @debug << message.force_encoding("utf-8") if @debug.is_a?(Array)
       end
 
       def setup
