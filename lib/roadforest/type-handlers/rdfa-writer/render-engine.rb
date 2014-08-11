@@ -115,7 +115,7 @@ module RoadForest::TypeHandlers
           message += "\n"
           message += ex.backtrace[0...10].map do |line|
             ("  " * (@debug_indent + 1)) + line
-          end
+          end.join("\n")
         end
         RoadForest::debug(message)
         @debug << message.force_encoding("utf-8") if @debug.is_a?(Array)
