@@ -110,7 +110,7 @@ module RoadForest::TypeHandlers
         message ||= "  " * @debug_indent
         begin
           message = message + yield if block_given?
-        rescue ex
+        rescue => ex
           message += ex.inspect
           message += "\n"
           message += ex.backtrace[0...10].map do |line|
