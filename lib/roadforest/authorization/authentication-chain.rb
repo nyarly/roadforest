@@ -53,7 +53,8 @@ module RoadForest
         @store.add_account(user,password,token)
       end
 
-      def authenticate(header)
+      def authenticate(request)
+        header = request.headers["Authorization"]
         return nil if header.nil?
         scheme, credentials = header.split(/\s+/, 2)
 

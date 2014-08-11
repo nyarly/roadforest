@@ -60,12 +60,13 @@ module RoadForest
         end
       end
 
-      def authorization(method, header)
+      def authorization(request)
+        method = request.method
         required = required_grants(method)
         if required.empty?
           :public
         else
-          services.authz.authorization(header, required_grants(method))
+          services.authz.authorization(request, required)
         end
       end
 

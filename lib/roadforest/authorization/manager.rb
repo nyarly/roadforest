@@ -36,7 +36,8 @@ module RoadForest
         #XXX consider launch-time randomized salt
         @grants = GrantsHolder.new(salt || "roadforest-insecure", HASH_FUNCTION)
 
-        @authenticator = authenticator || AuthenticationChain.new(DefaultAuthenticationStore.new)
+        @store = DefaultAuthenticationStore.new
+        @authenticator = authenticator || AuthenticationChain.new(@store)
         @policy = policy || Policy.new
         @policy.grants_holder = @grants
       end
@@ -63,8 +64,18 @@ module RoadForest
       #
       # TODO: Resource needs to add s-maxage=0 for :granted requests or public
       # for :public requests to the CacheControl header
-      def authorization(header, required_grants)
-        entity = authenticator.authenticate(header)
+      def authorization(request, required_grants)
+        entity = nil
+        if request.respond_to?(:client_cert)
+          subject = request.client_cert.subject
+          name = subject.to_a.find{|entry| entry[0] == "CN"}[1]
+          entity = @store.by_username(name)
+          entity.authenticate!
+        end
+
+        if entity.nil?
+          entity = authenticator.authenticate(request)
+        end
 
         return :refused if entity.nil?
 

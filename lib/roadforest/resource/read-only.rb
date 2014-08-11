@@ -93,7 +93,7 @@ module RoadForest
         end
 
         def is_authorized?(header)
-          @authorization = @interface.authorization(request.method, header)
+          @authorization = @interface.authorization(request)
           if(@authorization == :public || @authorization == :granted)
             return true
           end

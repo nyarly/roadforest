@@ -32,7 +32,7 @@ describe "RoadForest integration", :integration => true do
 
       RoadForest.serve(
         FileManagementExample::ServicesHost.new.tap do |host|
-          host.root_url = "http://localhost:#{@server_port}"
+          host.root_url = "https://localhost:#{@server_port}"
           host.file_records = [
             FileManagementExample::FileRecord.new("one", false),
             FileManagementExample::FileRecord.new("two", false),
@@ -42,9 +42,11 @@ describe "RoadForest integration", :integration => true do
           host.logger = Logger.new("integration-test.log")
           host.logger.level = Logger::DEBUG
           host.authz.authenticator.add_account("admin", "passwerd", "toktok")
+          host.authz.authenticator.add_account("admin@test.com", nil, nil) #nil password cannot authn
         end
       ) do |config|
         config.port = @server_port
+        RoadForest::SSL.enable(config, "spec_support/fixtures/server-key.pem", "spec_support/fixtures/server.cert")
         RoadForest::SSL.add_ca_cert(config, "spec_support/fixtures/ca.cert")
         RoadForest::SSL.add_client_verify(config)
       end
@@ -84,16 +86,11 @@ describe "RoadForest integration", :integration => true do
   end
 
   let :server_url do
-    "http://localhost:#{@server_port}"
+    "https://localhost:#{@server_port}"
   end
 
   let :server do
     server = RoadForest::RemoteHost.new(server_url)
-    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/ca.cert").inspect}"
-    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/client.cert").inspect}"
-    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/client-key.pem").inspect}"
-    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/server.cert").inspect}"
-    puts "\n#{__FILE__}:#{__LINE__} => #{File::stat("spec_support/fixtures/server-key.pem").inspect}"
     server.use_ca_cert("spec_support/fixtures/ca.cert")
     server.use_client_tls("spec_support/fixtures/client-key.pem", "spec_support/fixtures/client.cert")
     #server.trace = true
