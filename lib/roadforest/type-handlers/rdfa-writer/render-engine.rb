@@ -114,7 +114,7 @@ module RoadForest::TypeHandlers
           message += ex.inspect
           message += "\n"
           message += ex.backtrace[0...10].map do |line|
-            ("  " * @debug_indent + 1) + line
+            ("  " * (@debug_indent + 1)) + line
           end
         end
         RoadForest::debug(message)
