@@ -66,13 +66,6 @@ module RoadForest
       # for :public requests to the CacheControl header
       def authorization(request, required_grants)
         entity = nil
-        if request.respond_to?(:client_cert)
-          subject = request.client_cert.subject
-          name = subject.to_a.find{|entry| entry[0] == "CN"}[1]
-          entity = @store.by_username(name)
-          entity.authenticate!
-        end
-
         if entity.nil?
           entity = authenticator.authenticate(request)
         end

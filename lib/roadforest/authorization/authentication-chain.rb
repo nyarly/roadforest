@@ -54,6 +54,14 @@ module RoadForest
       end
 
       def authenticate(request)
+        if request.respond_to?(:client_cert)
+          subject = request.client_cert.subject
+          name = subject.to_a.find{|entry| entry[0] == "CN"}[1]
+          entity = @store.by_username(name)
+          entity.authenticate!
+          return entity
+        end
+
         header = request.headers["Authorization"]
         return nil if header.nil?
         scheme, credentials = header.split(/\s+/, 2)
