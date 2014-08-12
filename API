@@ -7,16 +7,14 @@ Objects accessed through API:
   SourceRigor
   Investigator
 
-
 Server API classes:
-  RF::Application
+  RF::ServiceHost
   RF::Model (+subclasses)
 
 Objects accessed through API:
   RF::Dispatcher
   RF::RDFHandler
   (RDF::BlobHandler)
-
 
 Common API classes:
 

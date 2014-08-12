@@ -10,6 +10,3 @@ Tests on the server side
 Every method in RDF::Normalization
 
 RemoteHost should be the origin of most of config (see API)
-
-Split GraphFocus class heirarchy into Client and Common - client includes
-GraphStore/SourceRigor stuff, Common is just graph walking and convenience.
